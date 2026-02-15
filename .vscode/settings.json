@@ -7,12 +7,21 @@
         "async",
         "DIR_DELIM",
         "PcgRandom",
-        "PerlinNoise",
+        // "PerlinNoise",
+        "ValueNoise",
+        "ValueNoiseMap",
+        "PseudoRandom",
+        "Raycast",
+        "SecureRandom",
+        "VoxelManip",
         "table",
         "dump",
         "VoxelArea",
         "factions",
-        "dbg"
+        "Settings",
+        "AreaStore",
+        "dbg",
+        "sloptech"
     ],
     "Lua.runtime.version": "LuaJIT",
     "Lua.runtime.path": [
