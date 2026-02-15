@@ -1,5 +1,10 @@
 sloptech = {};
---sounds
+
+--https://api.luanti.org/
+--https://github.com/GregTechCEu/GregTech-Modern?tab=readme-ov-file
+--DO NOT USE: https://github.com/brachy84/zedtech-ceu?tab=readme-ov-file (not chill license!)
+-- maybe ok, as mit: https://github.com/ULSTICK/GregTechRefreshed
+
 function sloptech.dump_globals_predicate(v) return true end
 
 --INIT
