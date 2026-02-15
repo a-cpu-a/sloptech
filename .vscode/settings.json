@@ -1,0 +1,23 @@
+{
+    "Lua.diagnostics.globals": [
+        "core",
+        "vector",
+        "ItemStack",
+        "nodeupdate",
+        "async",
+        "DIR_DELIM",
+        "PcgRandom",
+        "PerlinNoise",
+        "table",
+        "dump",
+        "VoxelArea",
+        "factions",
+        "dbg"
+    ],
+    "Lua.runtime.version": "LuaJIT",
+    "Lua.runtime.path": [
+        "?.lua",
+        "?/init.lua"
+    ],
+    "Lua.workspace.checkThirdParty": "Disable"
+}

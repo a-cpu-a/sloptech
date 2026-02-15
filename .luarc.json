@@ -1,0 +1,5 @@
+{
+    "workspace.library": [
+        "${env:PATH_TO_LUANTI_LSP_DEFINITIONS}/library"
+    ]
+}
