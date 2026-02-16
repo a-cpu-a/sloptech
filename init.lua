@@ -87,3 +87,4 @@ core.register_chatcommand("eval", {
         return true, "Result: " .. output_str
     end
 })
+dofile(core.get_modpath(mn) .. "/content/tools/wrench.lua");
