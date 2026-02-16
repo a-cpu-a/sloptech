@@ -1,12 +1,10 @@
-sloptech = {};
+local mn = "sloptech";
+_G[mn] = {};
 
 --https://api.luanti.org/
 --https://github.com/GregTechCEu/GregTech-Modern?tab=readme-ov-file
 --DO NOT USE: https://github.com/brachy84/zedtech-ceu?tab=readme-ov-file (not chill license!)
 -- maybe ok, as mit: https://github.com/ULSTICK/GregTechRefreshed
-
-function sloptech.dump_globals_predicate(v) return true end
-
 --INIT
 --PLATFORM
 
@@ -17,7 +15,6 @@ core.register_chatcommand("dump_globals", {
         -- 1. Collect all keys from the global environment (_G)
         local out = "";
         for k, v in pairs(_G) do
-            if (sloptech.dump_globals_predicate(k)) then
                 out = out .. tostring(k) .. ' : ';
                 if type(v) == "string" or type(v) == "number" or type(v) == "function" then
                     out = out .. tostring(v)
@@ -25,7 +22,6 @@ core.register_chatcommand("dump_globals", {
                     out = out .. type(v)
                 end
                 out = out .. '\n';
-            end
         end
 
         -- 4. Write to a file in the world path
