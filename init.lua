@@ -15,13 +15,13 @@ core.register_chatcommand("dump_globals", {
         -- 1. Collect all keys from the global environment (_G)
         local out = "";
         for k, v in pairs(_G) do
-                out = out .. tostring(k) .. ' : ';
-                if type(v) == "string" or type(v) == "number" or type(v) == "function" then
-                    out = out .. tostring(v)
-                else
-                    out = out .. type(v)
-                end
-                out = out .. '\n';
+            out = out .. tostring(k) .. ' : ';
+            if type(v) == "string" or type(v) == "number" or type(v) == "function" then
+                out = out .. tostring(v)
+            else
+                out = out .. type(v)
+            end
+            out = out .. '\n';
         end
 
         -- 4. Write to a file in the world path
@@ -83,4 +83,6 @@ core.register_chatcommand("eval", {
         return true, "Result: " .. output_str
     end
 })
+
+dofile(core.get_modpath(mn) .. "/content/pipey/init.lua");
 dofile(core.get_modpath(mn) .. "/content/tools/wrench.lua");
