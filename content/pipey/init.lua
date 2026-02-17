@@ -100,6 +100,7 @@ local function shapeNum2Id(num)
     return b:sub(num, num)
 end
 
+local onPlaceHandler;
 local function regPipeyBlocks(kind, tierName, tierInfo)
     for shape = 1, 64 do -- Skip 0 (usually invisible/air)
         -- Box list, with the center
@@ -182,17 +183,29 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
 
             drop = mn .. ":" .. kind .. "_" .. tierName .. "_B", -- Drop the base item
 
-            on_place = function(itemstack, placer, pointedThing)
-                local info = LUT[itemstack:get_name()];
-                local tmp = ItemStack(itemstack);
-                tmp:set_name(updatePipeyBlockName(info, '0'));
-                core.item_place(tmp, placer, pointedThing, math.random() * 256);
-                itemstack:set_count(itemstack:get_count() - 1);
-            end
+            on_place = onPlaceHandler
         })
     end
 end
 
+local function idx2Dir(idx)
+    if idx == 0 then
+        return vector.new(0, -1, 0)
+    end
+    if idx == 1 then
+        return vector.new(-1, 0, 0)
+    end
+    if idx == 2 then
+        return vector.new(0, 0, -1)
+    end
+    if idx == 4 then
+        return vector.new(1, 0, 0)
+    end
+    if idx == 5 then
+        return vector.new(0, 1, 0)
+    end
+    return vector.new(0, 0, 1)
+end
 local function getDirIdx(dir)
     if dir.y == 1 then
         return 5 -- Top
@@ -245,6 +258,36 @@ local function mapNodeId2ShapeNum(shapeId)
         end
     end
     return 63
+end
+
+onPlaceHandler = function(itemstack, placer, pointedThing)
+    if pointedThing.type ~= "node" then return nil end
+
+    local info = LUT[itemstack:get_name()];
+
+    local sBits = 0;
+    for i = 0, 5 do
+        local p = vector.add(pointedThing.above, idx2Dir(i));
+        local node = core.get_node(p);
+        --print(dump(p), node)
+        --core.set_node(p, { name = "sloptech:pipe_tiny_0" })
+        local nInfo = LUT[node.name];
+        if nInfo ~= nil and areKindsCompatible(nInfo.kind, info.kind) then
+            local chIdx = opDirIdx(i);
+            local shapeNum = mapNodeId2ShapeNum(nInfo.shapeId);
+            local con = bit.band(shapeNum - 1, 2 ^ chIdx) ~= 0;
+            if con then
+                sBits = bit.bor(sBits, 2 ^ i);
+            end
+        end
+    end
+
+    --TODO: shift check
+
+    local tmp = ItemStack(itemstack);
+    tmp:set_name(updatePipeyBlockName(info, shapeNum2Id(sBits + 1)));
+    tmp = core.item_place(tmp, placer, pointedThing, math.random() * 256);
+    itemstack:set_count(tmp:get_count());
 end
 
 sloptech.wrenchUse = function(pos, posAbove)
