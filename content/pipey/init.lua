@@ -1,36 +1,36 @@
 local mn = "sloptech";
 
 local WIRE_TIERS = {
-    x1 = {
+    ['1'] = {
         thickness = 3 / 32,
     },
-    x2 = {
+    ['2'] = {
         thickness = 5 / 32
     },
-    x4 = {
+    ['4'] = {
         thickness = 7 / 32
     },
-    x8 = {
+    ['8'] = {
         thickness = 9 / 32
     },
-    x16 = {
+    ['16'] = {
         thickness = 13 / 32
     }
 }
 local CABLE_TIERS = {
-    x1 = {
+    ['1'] = {
         thickness = 4 / 32,
     },
-    x2 = {
+    ['2'] = {
         thickness = 6 / 32
     },
-    x4 = {
+    ['4'] = {
         thickness = 8 / 32
     },
-    x8 = {
+    ['8'] = {
         thickness = 10 / 32
     },
-    x16 = {
+    ['16'] = {
         thickness = 14 / 32
     }
 }
@@ -152,8 +152,12 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         LUT[name] = info;
 
 
-        local tiertex = "";
-        if tierName == 'quadruple' or tierName == 'nonuple' then tiertex = '_' .. tierName end
+        local tiertex = "_base";
+        if kind ~= 'wire' and kind ~= 'cable' and shape == 64 then
+            tiertex = '_' .. tierName .. '_in'
+        else
+            if tierName == 'quadruple' or tierName == 'nonuple' then tiertex = '_' .. tierName .. '_base' end
+        end
 
         core.register_node(name, {
             description = "Someium " .. kind .. "\n⁂₂\n"
@@ -164,8 +168,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
                 "Transfer rate: 69L/t\nTemperature limit: 6900K\nCan handle gases, acids, cryogenics, all plasmas\nHAZARDOUS:\nCarcinogenic, caused by any contact",
             drawtype = "nodebox",
             paramtype = "light",
-            paramtype2 = "color",                                                                -- CRITICAL: Stores the material color
-            tiles = { mn .. "_blocks." .. kind .. tiertex .. "_base.png" .. "^[multiply:#FFF" }, -- Base texture
+            paramtype2 = "color",                                                           -- CRITICAL: Stores the material color
+            tiles = { mn .. "_blocks." .. kind .. tiertex .. ".png" .. "^[multiply:#FFF" }, -- Base texture
 
             -- We use color to tint the texture
             color = "#FFFFFF",
@@ -281,8 +285,6 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
             end
         end
     end
-
-    --TODO: shift check
 
     local tmp = ItemStack(itemstack);
     tmp:set_name(updatePipeyBlockName(info, shapeNum2Id(sBits + 1)));
