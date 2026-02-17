@@ -168,11 +168,11 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
                 "Transfer rate: 69L/t\nTemperature limit: 6900K\nCan handle gases, acids, cryogenics, all plasmas\nHAZARDOUS:\nCarcinogenic, caused by any contact",
             drawtype = "nodebox",
             paramtype = "light",
-            paramtype2 = "color",                                                                 -- CRITICAL: Stores the material color
-            tiles = { mn .. "_blocks.pipey." .. kind .. tiertex .. ".png" .. "^[multiply:#FFF" }, -- Base texture
+            paramtype2 = "color",                                            -- CRITICAL: Stores the material color
+            tiles = { mn .. "_blocks.pipey." .. kind .. tiertex .. ".png" }, -- Base texture
 
             -- We use color to tint the texture
-            color = "#FFFFFF",
+            --color = "#FFFFFF",
 
             node_box = {
                 type = "fixed",
@@ -181,7 +181,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
 
             groups = {
                 cracky = 1,
-                [mn .. ":" .. kind .. "_" .. tierName] = 1, -- Group for ABM
+                [mn .. ":" .. kind .. "_" .. tierName] = 1,
+                [mn .. ':' .. 'pipey'] = 1,
                 not_in_creative_inventory = (shapeId ~= 'B') and 1 or 0
             },
 
@@ -282,7 +283,7 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
             local con = bit.band(shapeNum - 1, 2 ^ chIdx) ~= 0;
             if vector.equals(p, pointedThing.under) then
                 if not con then
-                    -- TODO: connect that one too
+                    -- Connect the otherwise one too
                     shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ chIdx);
                     local shapeId = shapeNum2Id(shapeNum);
                     local new = updatePipeyBlockName(nInfo, shapeId)
@@ -293,7 +294,10 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
                 sBits = bit.bor(sBits, 2 ^ i);
             end
         elseif vector.equals(p, pointedThing.under) then
-            --TODO: check if its a machine that may accept this!
+            --It was placed on a machine
+            if core.get_item_group(node.name, mn .. ':machine') == 1 then
+                sBits = bit.bor(sBits, 2 ^ i);
+            end
         end
     end
 

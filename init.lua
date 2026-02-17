@@ -86,3 +86,4 @@ core.register_chatcommand("eval", {
 
 dofile(core.get_modpath(mn) .. "/content/pipey/init.lua");
 dofile(core.get_modpath(mn) .. "/content/tools/wrench.lua");
+dofile(core.get_modpath(mn) .. "/content/machines/register_machines.lua");
