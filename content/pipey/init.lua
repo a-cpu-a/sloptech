@@ -168,8 +168,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
                 "Transfer rate: 69L/t\nTemperature limit: 6900K\nCan handle gases, acids, cryogenics, all plasmas\nHAZARDOUS:\nCarcinogenic, caused by any contact",
             drawtype = "nodebox",
             paramtype = "light",
-            paramtype2 = "color",                                                           -- CRITICAL: Stores the material color
-            tiles = { mn .. "_blocks." .. kind .. tiertex .. ".png" .. "^[multiply:#FFF" }, -- Base texture
+            paramtype2 = "color",                                                                 -- CRITICAL: Stores the material color
+            tiles = { mn .. "_blocks.pipey." .. kind .. tiertex .. ".png" .. "^[multiply:#FFF" }, -- Base texture
 
             -- We use color to tint the texture
             color = "#FFFFFF",
