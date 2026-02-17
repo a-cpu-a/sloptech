@@ -280,9 +280,20 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
             local chIdx = opDirIdx(i);
             local shapeNum = mapNodeId2ShapeNum(nInfo.shapeId);
             local con = bit.band(shapeNum - 1, 2 ^ chIdx) ~= 0;
-            if con then
+            if vector.equals(p, pointedThing.under) then
+                if not con then
+                    -- TODO: connect that one too
+                    shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ chIdx);
+                    local shapeId = shapeNum2Id(shapeNum);
+                    local new = updatePipeyBlockName(nInfo, shapeId)
+                    core.swap_node(p, { name = new, param2 = node.param2 })
+                end
+                sBits = bit.bor(sBits, 2 ^ i);
+            elseif con then
                 sBits = bit.bor(sBits, 2 ^ i);
             end
+        elseif vector.equals(p, pointedThing.under) then
+            --TODO: check if its a machine that may accept this!
         end
     end
 
