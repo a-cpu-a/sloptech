@@ -162,8 +162,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         if kind == 'cable' then
             overlayTs = {}
             local conTex = {
-                name = mn .. '_blocks.pipey.cable_' .. tierName .. '_in.png^[multiply:#404040',
-                color = '#FFFFFF'
+                name = mn .. '_blocks.pipey.cable_' .. tierName .. '_in.png',
+                color = '#404040'
             }
             for i = 1, 6 do
                 local t = ''
