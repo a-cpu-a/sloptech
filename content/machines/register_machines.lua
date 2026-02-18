@@ -6,5 +6,9 @@ core.register_node(mn .. ':test_machine', {
     groups = {
         cracky = 1,
         [mn .. ':' .. 'machine'] = 1
-    }
+    },
+    after_place_node = function(pos, placer, itemstack, pointedThing)
+        if pointedThing.type ~= "node" then return end
+        sloptech._priv.handleMachineConnect(pos, pointedThing.under)
+    end
 })

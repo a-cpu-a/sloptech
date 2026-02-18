@@ -307,7 +307,27 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
     itemstack:set_count(tmp:get_count());
 end
 
-sloptech.wrenchUse = function(pos, posAbove)
+sloptech._priv.handleMachineConnect = function(p, posBelow)
+    local node = core.get_node(posBelow);
+    local nInfo = LUT[node.name];
+    if nInfo ~= nil then
+        if vector.equals(p, posBelow) then return end
+        local delta = vector.subtract(p, posBelow);
+        local chIdx = getDirIdx(delta);
+
+        local shapeNum = mapNodeId2ShapeNum(nInfo.shapeId);
+        local con = bit.band(shapeNum - 1, 2 ^ chIdx) ~= 0;
+        if not con then
+            -- Connect the otherwise one too
+            shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ chIdx);
+            local shapeId = shapeNum2Id(shapeNum);
+            local new = updatePipeyBlockName(nInfo, shapeId)
+            core.swap_node(posBelow, { name = new, param2 = node.param2 })
+        end
+    end
+end
+
+sloptech._priv.wrenchUse = function(pos, posAbove)
     local dir = vector.subtract(posAbove, pos)
     local idx = getDirIdx(dir)
 

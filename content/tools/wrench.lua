@@ -3,7 +3,7 @@ core.register_tool("sloptech:test_wrench", {
     inventory_image = "sloptech_items.test_wrench.png",
     on_place = function(item, _p, pointedThing)
         if pointedThing.type == "node" then
-            sloptech.wrenchUse(pointedThing.under, pointedThing.above);
+            sloptech._priv.wrenchUse(pointedThing.under, pointedThing.above);
         end
         return nil
     end
