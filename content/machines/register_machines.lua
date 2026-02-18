@@ -20,6 +20,13 @@ end)
 local function pos2Str(p)
     return p[1] .. '_' .. p[2] .. '_' .. p[3]
 end
+local function onConstructRegister(pos)
+    globalMachineMap[pos2Str(pos)] = pos
+end
+local function onDestructUnregister(pos)
+    globalMachineMap[pos2Str(pos)] = nil
+end
+local tickingNodes = {}
 
 core.register_node(mn .. ':test_machine', {
     description = "Test machine\nDoes nothing\nVoltage in: 8 EU/t (ULV)\nEnergy capacity: 1,024 EU",
@@ -40,9 +47,7 @@ core.register_node(mn .. ':test_machine', {
         core.get_node_timer(pos):start(0.2);
         globalMachineMap[pos2Str(pos)] = pos
     end,
-    on_destruct = function(pos)
-        globalMachineMap[pos2Str(pos)] = nil
-    end,
+    on_destruct = onDestructUnregister,
 
     -- 2. What happens when the timer triggers
     on_timer = function(pos, _el, node, _timeout)
@@ -66,6 +71,7 @@ core.register_node(mn .. ':test_machine', {
 
     after_place_node = sloptech._priv.handleMachineConnect
 })
+table.insert(tickingNodes, mn .. ':test_machine')
 
 core.register_node(mn .. ':creative_generator', {
     description = "Creative generator\nFree energy",
@@ -74,5 +80,25 @@ core.register_node(mn .. ':creative_generator', {
         cracky = 1,
         [mn .. ':' .. 'machine'] = 1
     },
+
+    [mn .. ':' .. 'tick'] = function(pos, node)
+        core.get_meta(pos):set_int('active', 1)
+        --TODO: output
+    end,
+    on_construct = onConstructRegister,
+    on_destruct = onDestructUnregister,
+
     after_place_node = sloptech._priv.handleMachineConnect
 })
+table.insert(tickingNodes, mn .. ':creative_generator')
+
+
+core.register_lbm({
+    name = mn .. ":restart_ticking",
+    nodenames = tickingNodes,
+    run_at_every_load = true,
+    action = function(pos, node)
+        globalMachineMap[pos2Str(pos)] = true
+    end
+})
+tickingNodes = nil
