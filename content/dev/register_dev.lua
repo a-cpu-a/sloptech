@@ -1,5 +1,33 @@
+local mn = "sloptech";
+
 --INIT
 --PLATFORM
+
+--/eval return core.get_player_by_name('singleplayer'):get_wielded_item()
+
+core.register_chatcommand(mn .. ':make-dev-platform', {
+    params = '<block size>',
+    description = 'Create a nice platform',
+    privs = { server = true },
+    func = function(plrName, sz)
+        local blocks = tonumber(sz);
+        local p = core.get_player_by_name(plrName):get_pos();
+        for x = 1, core.MAP_BLOCKSIZE * blocks do
+            for z = 1, core.MAP_BLOCKSIZE * blocks do
+                local mat = 'grey' --uk...
+                if ((x + z) % 2) == 1 then mat = 'silver' end
+
+                if x == 1 or z == 1 or x == core.MAP_BLOCKSIZE * blocks or z == core.MAP_BLOCKSIZE * blocks then
+                    if mat == 'silver' then mat = 'white' else mat = 'mcl_wool:white' end
+                end
+
+                if mat ~= 'mcl_wool:white' then mat = 'mcl_colorblocks:hardened_clay_' .. mat end
+
+                core.swap_node(vector.add(p, vector.new(x, 0, z)), { name = mat })
+            end
+        end
+    end
+})
 
 core.register_chatcommand("dump_globals", {
     params = "",
