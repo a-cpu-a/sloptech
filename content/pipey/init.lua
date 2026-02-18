@@ -200,6 +200,7 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
             drawtype = "nodebox",
             paramtype = "light",
             paramtype2 = "color",
+            palette = mn .. '_blocks.luts.material_pal1.png',
             tiles = textures,
             overlay_tiles = overlayTs,
 
