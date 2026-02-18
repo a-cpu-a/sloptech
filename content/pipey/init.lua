@@ -327,18 +327,23 @@ sloptech._priv.handleMachineConnect = function(p, posBelow)
     end
 end
 
-sloptech._priv.wrenchUse = function(pos, posAbove)
+sloptech._priv.wrenchUse = function(item, _p, pointedThing)
+    if pointedThing.type ~= "node" then return nil end
+
+    local pos = pointedThing.under;
+    local posAbove = pointedThing.above;
+
     local dir = vector.subtract(posAbove, pos)
     local idx = getDirIdx(dir)
 
     if not idx then -- Clicked from inside?
         print(dump(dir) .. "! hi")
-        return
+        return nil
     end
 
     local node = core.get_node(pos);
     local nodeInfo = LUT[node.name];
-    if nodeInfo == nil then return end
+    if nodeInfo == nil then return nil end
 
     local shapeNum = mapNodeId2ShapeNum(nodeInfo.shapeId);
     local newShape = bit.bxor(shapeNum - 1, 2 ^ idx) + 1
@@ -365,6 +370,8 @@ sloptech._priv.wrenchUse = function(pos, posAbove)
             core.swap_node(p2, { name = new, param2 = node.param2 })
         end
     end
+
+    return nil
 end
 
 for k, def in pairs(PIPE_TIERS) do
