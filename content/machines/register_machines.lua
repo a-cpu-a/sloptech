@@ -1,10 +1,25 @@
 local mn = "sloptech";
 
-local globalMachineMap
+local globalMachineMap = {}
 
-core.register_globalstep(function(dtime)
-    --globalMachineMap
+core.register_globalstep(function(_dtime)
+    for pk, p in pairs(globalMachineMap) do
+        local node = core.get_node(p)
+        local bad = true
+        if p ~= 'unknown' then
+            local r = core.registered_nodes[node.name];
+            local f = r[mn .. ':' .. 'tick']
+            if f ~= nil then
+                f(p, node)
+                bad = false
+            end
+        end
+        if bad then globalMachineMap[pk] = nil end
+    end
 end)
+local function pos2Str(p)
+    return p[1] .. '_' .. p[2] .. '_' .. p[3]
+end
 
 core.register_node(mn .. ':test_machine', {
     description = "Test machine\nDoes nothing\nVoltage in: 8 EU/t (ULV)\nEnergy capacity: 1,024 EU",
@@ -14,36 +29,38 @@ core.register_node(mn .. ':test_machine', {
         [mn .. ':' .. 'machine'] = 1
     },
 
+    [mn .. ':' .. 'tick'] = function(pos, node)
+        core.get_meta(pos):set_int('active', 1)
+        if math.random() > 0.1 then
+            core.get_meta(pos):set_string('active', '')
+        end
+    end,
+
     on_construct = function(pos)
-        core.log('cons ' .. dump(pos))
         core.get_node_timer(pos):start(0.2);
+        globalMachineMap[pos2Str(pos)] = pos
     end,
     on_destruct = function(pos)
-
+        globalMachineMap[pos2Str(pos)] = nil
     end,
 
     -- 2. What happens when the timer triggers
-    on_timer = function(pos, elapsed)
-        core.log('E: ' .. elapsed)
-        -- Add the smoke particle
-        core.add_particle({
-            pos = {
-                x = pos.x + math.random() * 0.5 - 0.25,
-                y = pos.y + 0.5,
-                z = pos.z + math.random() * 0.5 - 0.25
-            },
-
-            velocity = { x = 0, y = 0.5, z = 0 },           -- Move upward
-            acceleration = { x = 0.05, y = 0.1, z = 0.05 }, -- Constant speed
-
-            expirationtime = 3.5,                           -- How long the smoke lasts
-            size = 4,                                       -- Size of the smoke puff
-            collisiondetection = true,
-
-            texture = "sloptech_particles.smoke.png"
-        })
-
-        -- Return true to keep the timer running (loops the tick)
+    on_timer = function(pos, _el, node, _timeout)
+        if core.get_meta(pos):contains('active') then
+            core.add_particle({
+                pos = {
+                    x = pos.x + math.random() * 0.5 - 0.25,
+                    y = pos.y + 0.5,
+                    z = pos.z + math.random() * 0.5 - 0.25
+                },
+                velocity = { x = 0, y = 0.5, z = 0 },
+                acceleration = { x = 0.2, y = 0.4, z = 0.2 },
+                expirationtime = 5.5,
+                size = 4,
+                collisiondetection = true,
+                texture = "sloptech_particles.smoke.png"
+            })
+        end
         return true
     end,
 

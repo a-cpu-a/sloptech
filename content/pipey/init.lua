@@ -104,7 +104,7 @@ local dirNum2LuantiDir = { 2, 4, 6, 5, 3, 1 }
 
 local onPlaceHandler;
 local function regPipeyBlocks(kind, tierName, tierInfo)
-    for shape = 1, 64 do -- Skip 0 (usually invisible/air)
+    for shape = 1, 64 do
         -- Box list, with the center
         local nodebox = { { -tierInfo.thickness, -tierInfo.thickness, -tierInfo.thickness, tierInfo.thickness, tierInfo
             .thickness, tierInfo.thickness } }
@@ -158,7 +158,7 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
 
 
 
-        local overlayTs = nil -- { mn .. '_blocks.pipey.cable_16_in.png^[multiply:#404040' };
+        local overlayTs = nil
         if kind == 'cable' then
             overlayTs = {}
             local conTex = {
