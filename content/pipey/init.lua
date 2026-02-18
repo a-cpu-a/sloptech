@@ -338,6 +338,8 @@ sloptech._priv.wrenchUse = function(pos, posAbove)
 
     local node = core.get_node(pos);
     local nodeInfo = LUT[node.name];
+    if nodeInfo == nil then return end
+
     local shapeNum = mapNodeId2ShapeNum(nodeInfo.shapeId);
     local newShape = bit.bxor(shapeNum - 1, 2 ^ idx) + 1
     local connecting = bit.band(shapeNum - 1, 2 ^ idx) == 0;
