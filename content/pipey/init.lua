@@ -161,11 +161,12 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         local overlayTs = nil -- { mn .. '_blocks.pipey.cable_16_in.png^[multiply:#404040' };
         if kind == 'cable' then
             overlayTs = {}
-            local texPre = mn .. '_blocks.pipey.cable_'
-            local conTex = texPre .. tierName .. '_in.png^[multiply:#404040'
-            local sideTex = texPre .. 'base.png^[multiply:#404040'
+            local conTex = {
+                name = mn .. '_blocks.pipey.cable_' .. tierName .. '_in.png^[multiply:#404040',
+                color = '#FFFFFF'
+            }
             for i = 1, 6 do
-                local t = sideTex
+                local t = ''
                 if connections[i] then t = conTex end
                 overlayTs[dirNum2LuantiDir[i]] = t;
             end
@@ -180,6 +181,7 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         local conTex = texPre .. tierName .. '_in.png'
         if kind == 'cable' then
             conTex = sideTex
+            sideTex = { name = mn .. '_blocks.pipey.cable_base.png', color = '#404040' }
         elseif kind == 'wire' then
             -- todo: only apply to the direct edge, either by hacking it with tierName, or something else
             conTex = texPre .. 'in.png'
@@ -296,10 +298,13 @@ local function mapNodeId2ShapeNum(shapeId)
 end
 
 onPlaceHandler = function(itemstack, placer, pointedThing)
-    if pointedThing.type ~= "node" then return nil end
+    if pointedThing.type ~= "node" or vector.equals(pointedThing.under, pointedThing.above) then return nil end
+
+    --if core.get_node(pointedThing.above).name ~= 'air' then return nil end
 
     local info = LUT[itemstack:get_name()];
 
+    local otherCon = nil
     local sBits = 0;
     for i = 0, 5 do
         local p = vector.add(pointedThing.above, idx2Dir(i));
@@ -317,7 +322,7 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
                     shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ chIdx);
                     local shapeId = shapeNum2Id(shapeNum);
                     local new = updatePipeyBlockName(nInfo, shapeId)
-                    core.swap_node(p, { name = new, param2 = node.param2 })
+                    otherCon = { name = new, param2 = node.param2 }
                 end
                 sBits = bit.bor(sBits, 2 ^ i);
             elseif con then
@@ -335,6 +340,10 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
     tmp:set_name(updatePipeyBlockName(info, shapeNum2Id(sBits + 1)));
     tmp = core.item_place(tmp, placer, pointedThing, math.random() * 256);
     itemstack:set_count(tmp:get_count());
+    if tmp ~= nil and otherCon ~= nil then
+        --todo: check if it was placed
+        core.swap_node(pointedThing.under, otherCon);
+    end
 end
 
 sloptech._priv.handleMachineConnect = function(pos, placer, itemstack, pointedThing)
