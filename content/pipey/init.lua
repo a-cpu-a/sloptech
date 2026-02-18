@@ -100,6 +100,8 @@ local function shapeNum2Id(num)
     return b:sub(num, num)
 end
 
+local dirNum2LuantiDir = { 2, 4, 6, 5, 3, 1 }
+
 local onPlaceHandler;
 local function regPipeyBlocks(kind, tierName, tierInfo)
     for shape = 1, 64 do -- Skip 0 (usually invisible/air)
@@ -107,13 +109,16 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         local nodebox = { { -tierInfo.thickness, -tierInfo.thickness, -tierInfo.thickness, tierInfo.thickness, tierInfo
             .thickness, tierInfo.thickness } }
 
+        local connections = {}
+
         -- Add arms: [-y-x-zZXY]
-        for i = 0, 5 do
-            if bit.band(shape - 1, 2 ^ i) ~= 0 then
+        for i = 1, 6 do
+            connections[i] = bit.band(shape - 1, 2 ^ (i - 1)) ~= 0;
+            if connections[i] then
                 local x, y, z = -0.5, -0.5, -0.5;
                 local pX, pY, pZ = 0.5, 0.5, 0.5;
-                if i == 0 or i == 5 then
-                    if i < 3 then
+                if i == 1 or i == 6 then
+                    if i < 4 then
                         pY = -tierInfo.thickness;
                     else
                         y = tierInfo.thickness
@@ -121,8 +126,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
                 else
                     y = -tierInfo.thickness; pY = tierInfo.thickness
                 end
-                if i == 1 or i == 4 then
-                    if i < 3 then
+                if i == 2 or i == 5 then
+                    if i < 4 then
                         pX = -tierInfo.thickness;
                     else
                         x = tierInfo.thickness
@@ -130,8 +135,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
                 else
                     x = -tierInfo.thickness; pX = tierInfo.thickness
                 end
-                if i == 2 or i == 3 then
-                    if i < 3 then
+                if i == 3 or i == 4 then
+                    if i < 4 then
                         pZ = -tierInfo.thickness;
                     else
                         z = tierInfo.thickness
@@ -152,11 +157,37 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         LUT[name] = info;
 
 
-        local tiertex = "_base";
-        if kind ~= 'wire' and kind ~= 'cable' and shape == 64 then
-            tiertex = '_' .. tierName .. '_in'
-        else
-            if tierName == 'quadruple' or tierName == 'nonuple' then tiertex = '_' .. tierName .. '_base' end
+
+        local overlayTs = nil -- { mn .. '_blocks.pipey.cable_16_in.png^[multiply:#404040' };
+        if kind == 'cable' then
+            overlayTs = {}
+            local texPre = mn .. '_blocks.pipey.cable_'
+            local conTex = texPre .. tierName .. '_in.png^[multiply:#404040'
+            local sideTex = texPre .. 'base.png^[multiply:#404040'
+            for i = 1, 6 do
+                local t = sideTex
+                if connections[i] then t = conTex end
+                overlayTs[dirNum2LuantiDir[i]] = t;
+            end
+        end
+
+        local textures = {}
+        local texPre = mn .. "_blocks.pipey." .. kind .. '_'
+        local sideTex = texPre .. 'base.png'
+        if tierName == 'quadruple' or tierName == 'nonuple' then
+            sideTex = texPre .. tierName .. '_base.png'
+        end
+        local conTex = texPre .. tierName .. '_in.png'
+        if kind == 'cable' then
+            conTex = sideTex
+        elseif kind == 'wire' then
+            -- todo: only apply to the direct edge, either by hacking it with tierName, or something else
+            conTex = texPre .. 'in.png'
+        end
+        for i = 1, 6 do
+            local t = sideTex
+            if connections[i] then t = conTex end
+            textures[dirNum2LuantiDir[i]] = t;
         end
 
         core.register_node(name, {
@@ -168,11 +199,9 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
                 "Transfer rate: 69L/t\nTemperature limit: 6900K\nCan handle gases, acids, cryogenics, all plasmas\nHAZARDOUS:\nCarcinogenic, caused by any contact",
             drawtype = "nodebox",
             paramtype = "light",
-            paramtype2 = "color",                                            -- CRITICAL: Stores the material color
-            tiles = { mn .. "_blocks.pipey." .. kind .. tiertex .. ".png" }, -- Base texture
-
-            -- We use color to tint the texture
-            --color = "#FFFFFF",
+            paramtype2 = "color",
+            tiles = textures,
+            overlay_tiles = overlayTs,
 
             node_box = {
                 type = "fixed",
