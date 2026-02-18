@@ -307,7 +307,12 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
     itemstack:set_count(tmp:get_count());
 end
 
-sloptech._priv.handleMachineConnect = function(p, posBelow)
+sloptech._priv.handleMachineConnect = function(pos, placer, itemstack, pointedThing)
+    if pointedThing.type ~= "node" then return end
+
+    local p = pos;
+    local posBelow = pointedThing.under;
+
     local node = core.get_node(posBelow);
     local nInfo = LUT[node.name];
     if nInfo ~= nil then
