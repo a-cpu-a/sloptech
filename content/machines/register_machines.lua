@@ -49,12 +49,12 @@ core.register_node(mn .. ':test_machine', {
     [mn .. ':tick'] = function(pos, node)
         local meta = core.get_meta(pos)
         local e = meta:get_int('energy')
-        core.log('e: ' .. e)
-        if e > 8 then
+        if e >= 8 then
             meta:set_int('energy', e - 8)
             meta:set_int('active', 1)
         else
             meta:set_string('active', '')
+            --core.log('no e: ' .. e)
         end
     end,
 
@@ -87,6 +87,42 @@ core.register_node(mn .. ':test_machine', {
     after_place_node = sloptech._priv.handleMachineConnect
 })
 table.insert(tickingNodes, mn .. ':test_machine')
+
+--[[
+local function debugParticle(p_from, p_to, p_type)
+    local tex = "unknown_node.png"
+    local vel_y = 0
+
+    if p_type == "charge" then
+        tex = "aa.png"
+        vel_y = 2
+    elseif p_type == "wire" then
+        tex = "miner_pipe.png"
+    elseif p_type == "block" then
+        tex = "pipe_optical_in.png"
+    elseif p_type == "block2" then
+        tex = "pipe_duct_in.png"
+    end
+
+    -- Calculate direction vector from center of p_from to center of p_to
+    local dir = vector.direction(
+        p_from,
+        p_to
+    )
+
+    -- Adjust speed (distance is 1, so speed 2 makes it cross in 0.5s)
+    dir = vector.multiply(dir, 2)
+
+    core.add_particle({
+        pos = vector.add(p_from, 0.5),
+        velocity = { x = dir.x, y = dir.y + vel_y, z = dir.z },
+        expirationtime = 0.5,
+        size = 2,
+        collisiondetection = false,
+        texture = tex,
+        glow = 5
+    })
+end]]
 
 core.register_node(mn .. ':creative_generator', {
     description = "Creative generator\nFree energy",
@@ -125,6 +161,7 @@ core.register_node(mn .. ':creative_generator', {
                                 if neededVolts > voltage then
                                     --TODO: boom!
                                 else
+                                    --debugParticle(p, p2, "charge") -- Visual: Charge (Remaining energy used)
                                     local needCount = max - e
                                     if needCount >= energyLeft then
                                         meta:set_int('energy', e + energyLeft)
@@ -134,14 +171,21 @@ core.register_node(mn .. ':creative_generator', {
                                         energyLeft = energyLeft - needCount
                                     end
                                 end
+                            else
+                                -- Machine found but didn't accept energy (full or low voltage)
+                                --debugParticle(p, p2, "block")
                             end
                         elseif core.get_item_group(n.name, mn .. ':wiring') == 1 then
                             if sloptech.pipey.connected(n.name, sloptech.dir.rev(i)) then
                                 table.insert(nextLookList, p2)
                                 used[str] = 0 -- todo store loss?
+                                --debugParticle(p, p2, "wire") -- Visual: Wire path
+                            else
+                                --debugParticle(p, p2, "block2")
                             end
                         else
                             used[str] = -1
+                            --debugParticle(p, p2, "block")
                         end
                     end
                 end
