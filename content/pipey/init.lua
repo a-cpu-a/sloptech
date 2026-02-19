@@ -156,8 +156,6 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
         local name = buildPipeyBlockName(info);
         LUT[name] = info;
 
-
-
         local overlayTs = nil
         if kind == 'cable' then
             overlayTs = {}
@@ -192,6 +190,9 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
             textures[dirNum2LuantiDir[i]] = t;
         end
 
+        local wiringTag = 0
+        if kind == 'cable' or kind == 'wire' then wiringTag = 1 end
+
         core.register_node(name, {
             description = "Someium " .. kind .. "\n⁂₂\n"
                 .. "Max voltage: 64 (HV)\nMax amperage: 1\nLoss/meter/ampere: 6 EU-volt\n"
@@ -214,7 +215,8 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
             groups = {
                 cracky = 1,
                 [mn .. ":" .. kind .. "_" .. tierName] = 1,
-                [mn .. ':' .. 'pipey'] = 1,
+                [mn .. ':pipey'] = 1,
+                [mn .. ':wiring'] = wiringTag,
                 not_in_creative_inventory = (shapeId ~= 'B') and 1 or 0
             },
 
@@ -225,58 +227,61 @@ local function regPipeyBlocks(kind, tierName, tierInfo)
     end
 end
 
-local function idx2Dir(idx)
-    if idx == 0 then
+function sloptech.dir.fromIdx(idx)
+    if idx == 1 then
         return vector.new(0, -1, 0)
     end
-    if idx == 1 then
+    if idx == 2 then
         return vector.new(-1, 0, 0)
     end
-    if idx == 2 then
+    if idx == 3 then
         return vector.new(0, 0, -1)
     end
     if idx == 4 then
         return vector.new(1, 0, 0)
     end
-    if idx == 5 then
+    if idx == 6 then
         return vector.new(0, 1, 0)
     end
     return vector.new(0, 0, 1)
 end
-local function getDirIdx(dir)
+
+function sloptech.dir.intoIdx(dir)
     if dir.y == 1 then
-        return 5 -- Top
+        return 6 -- Top
     elseif dir.y == -1 then
-        return 0 -- Bottom
+        return 1 -- Bottom
     elseif dir.x == 1 then
-        return 4 -- Right
+        return 5 -- Right
     elseif dir.x == -1 then
-        return 1 -- Left
+        return 2 -- Left
     elseif dir.z == 1 then
-        return 3 -- Front
+        return 4 -- Front
     elseif dir.z == -1 then
-        return 2 -- Back
+        return 3 -- Back
     end
     return nil
 end
-local function opDirIdx(dir)
-    if dir == 0 then
-        return 5 -- Top
-    end
-    if dir == 5 then
-        return 0 -- Bottom
-    end
+
+function sloptech.dir.rev(dir)
     if dir == 1 then
-        return 4 -- Right
+        return 6 -- Top
     end
-    if dir == 4 then
-        return 1 -- Left
+    if dir == 6 then
+        return 1 -- Bottom
     end
     if dir == 2 then
-        return 3 -- Front
+        return 5 -- Right
     end
-    return 2     -- Back
+    if dir == 5 then
+        return 2 -- Left
+    end
+    if dir == 3 then
+        return 4 -- Front
+    end
+    return 3     -- Back
 end
+
 local function areKindsCompatible(k1, k2)
     if k1 == k2 then return true end
     if k1 == 'wire' or k1 == 'cable' then
@@ -297,6 +302,11 @@ local function mapNodeId2ShapeNum(shapeId)
     return 63
 end
 
+function sloptech.pipey.connected(nodeName, dir)
+    local n = mapNodeId2ShapeNum(LUT[nodeName].shapeId)
+    return bit.band(n - 1, 2 ^ (dir - 1)) ~= 0;
+end
+
 onPlaceHandler = function(itemstack, placer, pointedThing)
     if pointedThing.type ~= "node" or vector.equals(pointedThing.under, pointedThing.above) then return nil end
 
@@ -306,32 +316,32 @@ onPlaceHandler = function(itemstack, placer, pointedThing)
 
     local otherCon = nil
     local sBits = 0;
-    for i = 0, 5 do
-        local p = vector.add(pointedThing.above, idx2Dir(i));
+    for i = 1, 6 do
+        local p = vector.add(pointedThing.above, sloptech.dir.fromIdx(i));
         local node = core.get_node(p);
         --print(dump(p), node)
         --core.set_node(p, { name = "sloptech:pipe_tiny_0" })
         local nInfo = LUT[node.name];
         if nInfo ~= nil and areKindsCompatible(nInfo.kind, info.kind) then
-            local chIdx = opDirIdx(i);
+            local chIdx = sloptech.dir.rev(i);
             local shapeNum = mapNodeId2ShapeNum(nInfo.shapeId);
-            local con = bit.band(shapeNum - 1, 2 ^ chIdx) ~= 0;
+            local con = bit.band(shapeNum - 1, 2 ^ (chIdx - 1)) ~= 0;
             if vector.equals(p, pointedThing.under) then
                 if not con then
                     -- Connect the otherwise one too
-                    shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ chIdx);
+                    shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ (chIdx - 1));
                     local shapeId = shapeNum2Id(shapeNum);
                     local new = updatePipeyBlockName(nInfo, shapeId)
                     otherCon = { name = new, param2 = node.param2 }
                 end
-                sBits = bit.bor(sBits, 2 ^ i);
+                sBits = bit.bor(sBits, 2 ^ (i - 1));
             elseif con then
-                sBits = bit.bor(sBits, 2 ^ i);
+                sBits = bit.bor(sBits, 2 ^ (i - 1));
             end
         elseif vector.equals(p, pointedThing.under) then
             --It was placed on a machine
             if core.get_item_group(node.name, mn .. ':machine') == 1 then
-                sBits = bit.bor(sBits, 2 ^ i);
+                sBits = bit.bor(sBits, 2 ^ (i - 1));
             end
         end
     end
@@ -357,13 +367,13 @@ sloptech._priv.handleMachineConnect = function(pos, placer, itemstack, pointedTh
     if nInfo ~= nil then
         if vector.equals(p, posBelow) then return end
         local delta = vector.subtract(p, posBelow);
-        local chIdx = getDirIdx(delta);
+        local chIdx = sloptech.dir.intoIdx(delta);
 
         local shapeNum = mapNodeId2ShapeNum(nInfo.shapeId);
-        local con = bit.band(shapeNum - 1, 2 ^ chIdx) ~= 0;
+        local con = bit.band(shapeNum - 1, 2 ^ (chIdx - 1)) ~= 0;
         if not con then
             -- Connect the otherwise one too
-            shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ chIdx);
+            shapeNum = 1 + bit.bor(shapeNum - 1, 2 ^ (chIdx - 1));
             local shapeId = shapeNum2Id(shapeNum);
             local new = updatePipeyBlockName(nInfo, shapeId)
             core.swap_node(posBelow, { name = new, param2 = node.param2 })
@@ -378,7 +388,7 @@ sloptech._priv.wrenchUse = function(item, _p, pointedThing)
     local posAbove = pointedThing.above;
 
     local dir = vector.subtract(posAbove, pos)
-    local idx = getDirIdx(dir)
+    local idx = sloptech.dir.intoIdx(dir)
 
     if not idx then -- Clicked from inside?
         print(dump(dir) .. "! hi")
@@ -390,8 +400,8 @@ sloptech._priv.wrenchUse = function(item, _p, pointedThing)
     if nodeInfo == nil then return nil end
 
     local shapeNum = mapNodeId2ShapeNum(nodeInfo.shapeId);
-    local newShape = bit.bxor(shapeNum - 1, 2 ^ idx) + 1
-    local connecting = bit.band(shapeNum - 1, 2 ^ idx) == 0;
+    local newShape = bit.bxor(shapeNum - 1, 2 ^ (idx - 1)) + 1
+    local connecting = bit.band(shapeNum - 1, 2 ^ (idx - 1)) == 0;
     local shapeId = shapeNum2Id(newShape);
     local new = updatePipeyBlockName(nodeInfo, shapeId)
     core.swap_node(pos, { name = new, param2 = node.param2 })
@@ -403,12 +413,12 @@ sloptech._priv.wrenchUse = function(item, _p, pointedThing)
     local n2 = core.get_node(p2);
     local n2Info = LUT[n2.name];
     if n2Info ~= nil and areKindsCompatible(n2Info.kind, nodeInfo.kind) then
-        idx = opDirIdx(idx);
+        idx = sloptech.dir.rev(idx);
         shapeNum = mapNodeId2ShapeNum(n2Info.shapeId);
-        local alreadyConnected = bit.band(shapeNum - 1, 2 ^ idx) ~= 0;
+        local alreadyConnected = bit.band(shapeNum - 1, 2 ^ (idx - 1)) ~= 0;
         if alreadyConnected ~= connecting then
             -- if user has odd mismatching ones, then match them together
-            newShape = bit.bxor(shapeNum - 1, 2 ^ idx) + 1
+            newShape = bit.bxor(shapeNum - 1, 2 ^ (idx - 1)) + 1
             shapeId = shapeNum2Id(newShape);
             new = updatePipeyBlockName(n2Info, shapeId)
             core.swap_node(p2, { name = new, param2 = node.param2 })

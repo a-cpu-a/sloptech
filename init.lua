@@ -1,5 +1,5 @@
 local mn = "sloptech";
-_G[mn] = { _priv = {} };
+_G[mn] = { _priv = {}, dir = {}, pipey = {} };
 
 --https://api.luanti.org/
 --https://github.com/GregTechCEu/GregTech-Modern?tab=readme-ov-file
