@@ -237,7 +237,7 @@ function sloptech.dir.fromIdx(idx)
     if idx == 3 then
         return vector.new(0, 0, -1)
     end
-    if idx == 4 then
+    if idx == 5 then
         return vector.new(1, 0, 0)
     end
     if idx == 6 then
@@ -252,13 +252,13 @@ function sloptech.dir.intoIdx(dir)
     elseif dir.y == -1 then
         return 1 -- Bottom
     elseif dir.x == 1 then
-        return 5 -- Right
+        return 5
     elseif dir.x == -1 then
-        return 2 -- Left
+        return 2
     elseif dir.z == 1 then
-        return 4 -- Front
+        return 4
     elseif dir.z == -1 then
-        return 3 -- Back
+        return 3
     end
     return nil
 end
@@ -304,6 +304,7 @@ end
 
 function sloptech.pipey.connected(nodeName, dir)
     local n = mapNodeId2ShapeNum(LUT[nodeName].shapeId)
+    print(dir, n)
     return bit.band(n - 1, 2 ^ (dir - 1)) ~= 0;
 end
 
