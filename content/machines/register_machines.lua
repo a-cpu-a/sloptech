@@ -6,9 +6,9 @@ core.register_globalstep(function(_dtime)
     for pk, p in pairs(globalMachineMap) do
         local node = core.get_node(p)
         local bad = true
-        if p ~= 'unknown' then
+        if node.name ~= 'unknown' then
             local r = core.registered_nodes[node.name];
-            local f = r[mn .. ':' .. 'tick']
+            local f = r[mn .. ':tick']
             if f ~= nil then
                 f(p, node)
                 bad = false
@@ -16,6 +16,9 @@ core.register_globalstep(function(_dtime)
         end
         if bad then globalMachineMap[pk] = nil end
     end
+end)
+core.register_on_shutdown(function()
+    globalMachineMap = {}
 end)
 local function pos2Str(p)
     return p[1] .. '_' .. p[2] .. '_' .. p[3]
@@ -28,18 +31,30 @@ local function onDestructUnregister(pos)
 end
 local tickingNodes = {}
 
+local function nodeMaxEnergy(pos, node)
+    return 1024
+end
+local function nodeVoltage(pos, node)
+    return 8
+end
+
 core.register_node(mn .. ':test_machine', {
     description = "Test machine\nDoes nothing\nVoltage in: 8 EU/t (ULV)\nEnergy capacity: 1,024 EU",
     tiles = { mn .. '_blocks.machines.test_in.png' },
     groups = {
         cracky = 1,
-        [mn .. ':' .. 'machine'] = 1
+        [mn .. ':machine'] = 1
     },
 
-    [mn .. ':' .. 'tick'] = function(pos, node)
-        core.get_meta(pos):set_int('active', 1)
-        if math.random() > 0.1 then
-            core.get_meta(pos):set_string('active', '')
+    [mn .. ':tick'] = function(pos, node)
+        local meta = core.get_meta(pos)
+        local e = meta:get_int('energy')
+        core.log('e: ' .. e)
+        if e > 8 then
+            meta:set_int('energy', e - 8)
+            meta:set_int('active', 1)
+        else
+            meta:set_string('active', '')
         end
     end,
 
@@ -78,11 +93,63 @@ core.register_node(mn .. ':creative_generator', {
     tiles = { mn .. '_blocks.machines.test_out.png' },
     groups = {
         cracky = 1,
-        [mn .. ':' .. 'machine'] = 1
+        [mn .. ':machine'] = 1
     },
 
-    [mn .. ':' .. 'tick'] = function(pos, node)
-        core.get_meta(pos):set_int('active', 1)
+    [mn .. ':tick'] = function(pos, node)
+        local voltage = 8
+        local energyLeft = 8
+
+        local lookList = { pos }
+        local used = {}
+        used[pos2Str(pos)] = 0 --loss
+
+        while #lookList ~= 0 do
+            local nextLookList = {}
+            for _i, p in ipairs(lookList) do
+                for i = 1, 6 do
+                    local p2 = vector.add(p, sloptech.dir.fromIdx(i))
+                    local str = pos2Str(p2);
+                    if used[str] == nil then
+                        --todo: check neighbors for loss instead (take smallest loss, tweak it)
+                        local n = core.get_node(p2)
+
+                        if core.get_item_group(n.name, mn .. ':machine') == 1 then
+                            used[str] = -1
+
+                            local meta = core.get_meta(p2)
+                            local e = meta:get_int('energy')
+                            local max = nodeMaxEnergy(p2, n)
+                            local neededVolts = nodeVoltage(p2, n)
+                            if neededVolts <= voltage and e ~= max then
+                                if neededVolts > voltage then
+                                    --TODO: boom!
+                                else
+                                    local needCount = max - e
+                                    if needCount >= energyLeft then
+                                        meta:set_int('energy', e + energyLeft)
+                                        return
+                                    else
+                                        meta:set_int('energy', max)
+                                        energyLeft = energyLeft - needCount
+                                    end
+                                end
+                            end
+                        elseif core.get_item_group(n.name, mn .. ':wiring') == 1 then
+                            if sloptech.pipey.connected(n.name, sloptech.dir.rev(i)) then
+                                table.insert(nextLookList, p2)
+                                used[str] = 0 -- todo store loss?
+                            end
+                        else
+                            used[str] = -1
+                        end
+                    end
+                end
+            end
+            lookList = nextLookList;
+        end
+
+        --core.get_meta(pos):set_int('active', 1)
         --TODO: output
     end,
     on_construct = onConstructRegister,
@@ -98,7 +165,7 @@ core.register_lbm({
     nodenames = tickingNodes,
     run_at_every_load = true,
     action = function(pos, node)
-        globalMachineMap[pos2Str(pos)] = true
+        globalMachineMap[pos2Str(pos)] = pos
     end
 })
 tickingNodes = nil
